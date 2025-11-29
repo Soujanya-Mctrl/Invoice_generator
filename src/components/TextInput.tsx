@@ -1,5 +1,9 @@
 'use client';
 
+import { useState } from 'react';
+import { INVOICE_FORMAT_EXAMPLE } from '@/lib/extraction/format-template';
+import { Button } from '@/components/ui/button';
+
 interface TextInputProps {
   value: string;
   onChange: (text: string) => void;
@@ -21,6 +25,7 @@ export default function TextInput({
   onExtract,
   isLoading,
 }: TextInputProps) {
+  const [showExample, setShowExample] = useState(false);
   const characterCount = value.length;
   const maxCharacters = 10000; // Reasonable limit for payment text
 
@@ -34,21 +39,74 @@ export default function TextInput({
     }
   };
 
+  const handleUseExample = () => {
+    onChange(INVOICE_FORMAT_EXAMPLE);
+    setShowExample(false);
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto p-4 sm:p-6 space-y-4">
       <div className="space-y-2">
-        <label
-          htmlFor="payment-text"
-          className="block text-sm sm:text-base font-medium text-gray-700"
-        >
-          Paste Payment Text
-        </label>
+        <div className="flex items-center justify-between">
+          <label
+            htmlFor="payment-text"
+            className="block text-sm sm:text-base font-medium text-foreground"
+          >
+            Paste Payment Text
+          </label>
+          <button
+            type="button"
+            onClick={() => setShowExample(!showExample)}
+            className="text-xs sm:text-sm text-primary hover:text-primary/80 underline"
+          >
+            {showExample ? 'Hide' : 'Show'} Format Example
+          </button>
+        </div>
+
+        {showExample && (
+          <div className="bg-secondary/40 dark:bg-secondary border border-border rounded-lg p-3 sm:p-4 space-y-2">
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                <p className="text-xs sm:text-sm font-medium text-foreground">
+                  Simple Format (Recommended)
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Use this format for best extraction results:
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleUseExample}
+                className="text-xs sm:text-sm px-3 py-1 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors whitespace-nowrap"
+              >
+                Use Example
+              </button>
+            </div>
+            <pre className="text-xs sm:text-sm bg-card p-3 rounded border border-border overflow-x-auto">
+              {INVOICE_FORMAT_EXAMPLE}
+            </pre>
+            <p className="text-xs text-muted-foreground">
+              💡 Tip: You can also paste free-form text, and we'll try to extract the information automatically!
+            </p>
+          </div>
+        )}
+
         <textarea
           id="payment-text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Paste payment details from email, chat, SMS, or notes..."
-          className="mobile-input w-full h-48 sm:h-64 px-3 sm:px-4 py-2 sm:py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y transition-colors touch-manipulation"
+          placeholder={`Client: Ankit Sharma
+Company: Tech Solutions
+Email: ankit@example.com
+Phone: 9876543210
+Address: Mumbai, India
+
+Items:
+- Logo redesign: ₹3,200
+- Website banner: ₹4,500
+
+Due Date: 12th March 2025`}
+          className="mobile-input w-full h-48 sm:h-64 px-3 sm:px-4 py-2 sm:py-3 text-sm border border-input rounded-lg bg-background text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] resize-y transition-colors touch-manipulation"
           disabled={isLoading}
           maxLength={maxCharacters}
           autoComplete="off"
@@ -56,7 +114,7 @@ export default function TextInput({
           autoCapitalize="off"
           spellCheck="false"
         />
-        <div className="flex items-center justify-between text-xs sm:text-sm text-gray-500">
+        <div className="flex items-center justify-between text-xs sm:text-sm text-muted-foreground">
           <span>
             {characterCount} / {maxCharacters} characters
           </span>
@@ -65,7 +123,7 @@ export default function TextInput({
               type="button"
               onClick={handleClear}
               disabled={isLoading}
-              className="touch-target text-gray-600 hover:text-gray-800 active:text-gray-900 underline disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="touch-target text-muted-foreground hover:text-foreground active:text-foreground underline disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Clear
             </button>
@@ -74,11 +132,12 @@ export default function TextInput({
       </div>
 
       <div className="flex justify-center pt-2">
-        <button
+        <Button
           type="button"
           onClick={handleExtract}
           disabled={!value.trim() || isLoading}
-          className="touch-target w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-3.5 bg-blue-600 text-white text-base sm:text-lg font-medium rounded-lg hover:bg-blue-700 active:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors min-w-[200px]"
+          size="lg"
+          className="touch-target w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-3.5 min-w-[200px]"
         >
           {isLoading ? (
             <span className="flex items-center justify-center">
@@ -107,7 +166,7 @@ export default function TextInput({
           ) : (
             'Extract Invoice Data'
           )}
-        </button>
+        </Button>
       </div>
     </div>
   );

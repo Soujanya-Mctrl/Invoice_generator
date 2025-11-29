@@ -50,6 +50,13 @@ describe('ExtractionEngine', () => {
       expect(result.invoiceDate).toBe('2024-12-31');
     });
 
+    it('should extract dates in text format with ordinal', () => {
+      const text = 'Please pay by 12th March 2025';
+      const result = engine.extractWithRegex(text);
+      
+      expect(result.invoiceDate).toBe('2025-03-12');
+    });
+
     it('should extract UPI ID', () => {
       const text = 'Pay to: merchant@paytm';
       const result = engine.extractWithRegex(text);
@@ -92,6 +99,13 @@ describe('ExtractionEngine', () => {
       expect(result.clientName).toBe('John Doe');
     });
 
+    it('should extract client name from greeting pattern', () => {
+      const text = 'Hi Mr. Ankit Sharma, Here is the invoice for services';
+      const result = engine.extractWithRegex(text);
+      
+      expect(result.clientName).toBe('Ankit Sharma');
+    });
+
     it('should extract multiple fields from complex text', () => {
       const text = `
         Payment from Alice Smith
@@ -108,6 +122,43 @@ describe('ExtractionEngine', () => {
       expect(result.invoiceDate).toBe('2024-11-25');
       expect(result.paymentInfo?.upiId).toBe('alice@oksbi');
       expect(result.clientPhone).toBe('9876543210');
+    });
+
+    it('should extract all fields from real-world payment text', () => {
+      const text = 'Hi Ankit,Here\'s the final amount for the design work completed.Logo redesign came to ₹3,200 and the website banner set is ₹4,500.Total payable is ₹7,700.Please try to clear it by 12th March 2025.';
+      const result = engine.extractWithRegex(text);
+      
+      expect(result.clientName).toBe('Ankit');
+      expect(result.currency).toBe('INR');
+      expect(result.invoiceDate).toBe('2025-03-12');
+      
+      // Should extract line items
+      expect(result.items).toBeDefined();
+      expect(result.items?.length).toBeGreaterThan(0);
+      
+      // Should calculate total from line items
+      if (result.items && result.items.length > 0) {
+        const calculatedTotal = result.items.reduce((sum, item) => sum + item.amount, 0);
+        expect(result.total).toBe(calculatedTotal);
+      }
+    });
+
+    it('should extract line items with descriptions and amounts', () => {
+      const text = 'Logo redesign came to ₹3,200 and the website banner set is ₹4,500';
+      const result = engine.extractWithRegex(text);
+      
+      expect(result.items).toBeDefined();
+      expect(result.items?.length).toBe(2);
+      
+      if (result.items) {
+        expect(result.items[0].description).toContain('Logo redesign');
+        expect(result.items[0].amount).toBe(3200);
+        
+        expect(result.items[1].description).toContain('website banner set');
+        expect(result.items[1].amount).toBe(4500);
+        
+        expect(result.total).toBe(7700);
+      }
     });
   });
 

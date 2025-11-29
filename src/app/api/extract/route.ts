@@ -61,8 +61,21 @@ export async function POST(request: NextRequest) {
     let extractionMethod: 'regex' | 'ai' | 'hybrid' = 'regex';
     let aiError: ErrorResponse | null = null;
 
-    // Optionally call AI extraction if useAI flag is true
-    if (body.useAI === true) {
+    // Check if regex extraction is incomplete (missing critical fields)
+    const regexMissingFields: string[] = [];
+    if (!regexResults.clientName) {
+      regexMissingFields.push('clientName');
+    }
+    if (!regexResults.total && !regexResults.subtotal) {
+      regexMissingFields.push('amount');
+    }
+
+    // Automatically use AI extraction if:
+    // 1. useAI flag is explicitly true, OR
+    // 2. Regex extraction is incomplete (missing required fields)
+    const shouldUseAI = body.useAI === true || regexMissingFields.length > 0;
+
+    if (shouldUseAI) {
       try {
         const aiResults = await engine.extractWithAI(body.text);
         
@@ -89,7 +102,7 @@ export async function POST(request: NextRequest) {
     // Merge results to ensure defaults are set
     const mergedResults = engine.mergeResults(finalResults);
 
-    // Check if extraction is incomplete (missing critical fields)
+    // Check if extraction is still incomplete after AI attempt
     const missingFields: string[] = [];
     
     if (!mergedResults.clientName) {

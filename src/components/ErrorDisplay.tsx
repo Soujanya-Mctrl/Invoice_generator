@@ -75,40 +75,27 @@ export default function ErrorDisplay({
   };
 
   // Get styles based on severity
+  // Use neutral surfaces that work in both light and dark mode,
+  // and rely on icon colour to communicate severity.
   const getStyles = () => {
     if (inline) {
-      switch (severity) {
-        case 'info':
-          return 'bg-blue-50 border-blue-200 text-blue-800';
-        case 'warning':
-          return 'bg-yellow-50 border-yellow-200 text-yellow-800';
-        case 'error':
-        default:
-          return 'bg-red-50 border-red-200 text-red-800';
-      }
-    } else {
-      switch (severity) {
-        case 'info':
-          return 'bg-blue-50 border-blue-300 text-blue-900';
-        case 'warning':
-          return 'bg-yellow-50 border-yellow-300 text-yellow-900';
-        case 'error':
-        default:
-          return 'bg-red-50 border-red-300 text-red-900';
-      }
+      // Full-width inline banners (like the AI status bar)
+      return 'bg-secondary text-foreground border-border';
     }
+    // Regular in-content cards
+    return 'bg-card text-foreground border-border';
   };
 
   // Get icon color based on severity
   const getIconColor = () => {
     switch (severity) {
       case 'info':
-        return 'text-blue-600';
+        return 'text-primary';
       case 'warning':
-        return 'text-yellow-600';
+        return 'text-yellow-500';
       case 'error':
       default:
-        return 'text-red-600';
+        return 'text-destructive';
     }
   };
 

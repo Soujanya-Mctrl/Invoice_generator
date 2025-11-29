@@ -7,6 +7,7 @@ import InvoicePreview from '@/components/InvoicePreview';
 import VendorProfile from '@/components/VendorProfile';
 import Toast, { ToastType } from '@/components/Toast';
 import ErrorDisplay from '@/components/ErrorDisplay';
+import { Button } from '@/components/ui/button';
 import { InvoiceData, VendorProfile as VendorProfileType, ExtractResponse } from '@/types';
 import { ErrorResponse } from '@/types/error';
 import { storageService } from '@/lib/storage/service';
@@ -322,22 +323,22 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-background text-foreground transition-colors">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
+      <header className="bg-card border-b border-border shadow-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto responsive-padding py-3 sm:py-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary rounded-lg flex items-center justify-center">
                 <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
               <div>
-                <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
+                <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">
                   Invoice Generator
                 </h1>
-                <p className="text-xs sm:text-sm text-gray-600">
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   Professional invoices in seconds
                 </p>
               </div>
@@ -345,22 +346,24 @@ export default function Home() {
             
             {/* Profile Icon - Only show after profile setup */}
             {step !== 'profile-setup' && vendorProfile && (
-              <button
+              <Button
                 onClick={handleEditProfile}
-                className="touch-target flex items-center gap-2 px-3 sm:px-4 py-2 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-lg transition-colors"
+                variant="outline"
+                size="sm"
+                className="touch-target flex items-center gap-2 px-3 sm:px-4"
                 title="Edit Vendor Profile"
               >
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-semibold">
                   {vendorProfile.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="hidden sm:block text-left">
-                  <p className="text-sm font-medium text-gray-900">{vendorProfile.name}</p>
-                  <p className="text-xs text-gray-600">{vendorProfile.companyName || 'Edit Profile'}</p>
+                  <p className="text-sm font-medium text-foreground">{vendorProfile.name}</p>
+                  <p className="text-xs text-muted-foreground">{vendorProfile.companyName || 'Edit Profile'}</p>
                 </div>
-                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                 </svg>
-              </button>
+              </Button>
             )}
           </div>
           
@@ -369,25 +372,25 @@ export default function Home() {
             <div className="mt-4 flex items-center justify-center gap-2 text-xs sm:text-sm">
               <div className={`px-3 py-1.5 rounded-full transition-all ${
                 step === 'input' 
-                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md' 
-                  : 'bg-gray-200 text-gray-600'
-              }`}>
+                  ? 'bg-primary text-primary-foreground shadow-md' 
+                  : 'bg-muted text-muted-foreground'
+               }`}>
                 <span className="hidden sm:inline">1. </span>Input
               </div>
-              <div className="w-6 sm:w-8 h-px bg-gray-300" />
+              <div className="w-6 sm:w-8 h-px bg-border" />
               <div className={`px-3 py-1.5 rounded-full transition-all ${
                 step === 'edit' 
-                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md' 
-                  : 'bg-gray-200 text-gray-600'
-              }`}>
+                  ? 'bg-primary text-primary-foreground shadow-md' 
+                  : 'bg-muted text-muted-foreground'
+               }`}>
                 <span className="hidden sm:inline">2. </span>Edit
               </div>
               <div className="w-6 sm:w-8 h-px bg-gray-300" />
               <div className={`px-3 py-1.5 rounded-full transition-all ${
                 step === 'preview' 
-                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md' 
-                  : 'bg-gray-200 text-gray-600'
-              }`}>
+                  ? 'bg-primary text-primary-foreground shadow-md' 
+                  : 'bg-muted text-muted-foreground'
+               }`}>
                 <span className="hidden sm:inline">3. </span>Preview
               </div>
             </div>
@@ -403,20 +406,20 @@ export default function Home() {
           {step === 'profile-setup' && (
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full mb-4">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-full mb-4">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
                   Welcome! Let's Set Up Your Profile
                 </h2>
-                <p className="text-gray-600">
+                <p className="text-muted-foreground">
                   This information will appear on all your invoices
                 </p>
               </div>
               
-              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 sm:p-8">
+              <div className="bg-card rounded-xl shadow-lg border border-border p-6 sm:p-8">
                 <VendorProfile
                   profile={vendorProfile}
                   onChange={handleVendorProfileChange}
@@ -425,13 +428,14 @@ export default function Home() {
                 />
                 
                 <div className="mt-8 flex justify-center">
-                  <button
+                  <Button
                     onClick={handleProfileSetupComplete}
                     disabled={!vendorProfile}
-                    className="touch-target px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 active:from-blue-800 active:to-purple-800 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg"
+                    size="lg"
+                    className="touch-target px-8"
                   >
                     Continue to Invoice Generator
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -461,12 +465,12 @@ export default function Home() {
           )}
 
           {step === 'input' && (
-            <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 sm:p-8">
+            <div className="bg-card rounded-xl shadow-lg border border-border p-6 sm:p-8">
               <div className="mb-6">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+                <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">
                   Paste Payment Details
                 </h2>
-                <p className="text-gray-600 text-sm sm:text-base">
+                <p className="text-muted-foreground text-sm sm:text-base">
                   Copy and paste payment information from emails, messages, or notes
                 </p>
               </div>
@@ -510,14 +514,15 @@ export default function Home() {
               
               {/* Navigation buttons */}
               <div className="mt-4 sm:mt-6 flex justify-between">
-                <button
+                <Button
                   type="button"
                   onClick={handleStartOver}
-                  className="touch-target px-4 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                  variant="outline"
+                  className="touch-target px-4 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base"
                 >
                   Start Over
-                </button>
-              </div>
+                </Button>
+               </div>
             </div>
           )}
 
@@ -542,14 +547,15 @@ export default function Home() {
               
               {/* Navigation buttons */}
               <div className="mt-4 sm:mt-6 flex justify-between">
-                <button
+                <Button
                   type="button"
                   onClick={handleStartOver}
-                  className="touch-target px-4 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                  variant="outline"
+                  className="touch-target px-4 sm:px-6 py-2 sm:py-2.5 text-sm sm:text-base"
                 >
                   Create New Invoice
-                </button>
-              </div>
+                </Button>
+               </div>
             </div>
           )}
         </div>
@@ -558,19 +564,21 @@ export default function Home() {
       {/* Profile Edit Modal */}
       {showProfileModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+          <div className="bg-card rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl sm:text-2xl font-bold text-foreground">
                 Edit Vendor Profile
               </h2>
-              <button
+              <Button
                 onClick={handleCloseProfileModal}
-                className="touch-target p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                variant="ghost"
+                size="icon"
+                className="touch-target"
               >
-                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
-              </button>
+              </Button>
             </div>
             <div className="p-6">
               <VendorProfile
@@ -580,21 +588,22 @@ export default function Home() {
                 isSetupMode={false}
               />
               <div className="mt-6 flex justify-end gap-3">
-                <button
+                <Button
                   onClick={handleCloseProfileModal}
-                  className="touch-target px-6 py-2.5 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 active:bg-gray-400 transition-colors"
+                  variant="outline"
+                  className="touch-target px-6 py-2.5"
                 >
                   Close
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={() => {
                     handleCloseProfileModal();
                     showToast('success', 'Profile updated successfully');
                   }}
-                  className="touch-target px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-purple-700 active:from-blue-800 active:to-purple-800 transition-all shadow-md"
+                  className="touch-target px-6 py-2.5"
                 >
                   Save Changes
-                </button>
+                </Button>
               </div>
             </div>
           </div>

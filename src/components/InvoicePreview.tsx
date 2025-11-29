@@ -50,12 +50,12 @@ export default function InvoicePreview({
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 bg-card rounded-lg shadow-sm border border-border">
       {/* Header with Actions */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-3 sm:gap-4">
         <div className="w-full sm:w-auto">
-          <h2 className="text-xl sm:text-2xl font-bold">Invoice Preview</h2>
-          <p className="text-xs sm:text-sm text-gray-600 mt-1">
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground">Invoice Preview</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             Review your invoice before downloading
           </p>
         </div>
@@ -76,7 +76,7 @@ export default function InvoicePreview({
             <PDFDownloadLink
               document={<InvoiceDocument data={data} vendor={vendorProfile} />}
               fileName={getFileName()}
-              className="touch-target inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 h-10 px-4 py-2 w-full sm:w-auto"
+              className="touch-target inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80 h-10 px-4 py-2 w-full sm:w-auto"
             >
               {({ loading }) =>
                 loading ? (
@@ -97,19 +97,19 @@ export default function InvoicePreview({
       </div>
 
       {/* Invoice Details Summary */}
-      <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
+      <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-muted rounded-lg border border-border">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 text-xs sm:text-sm">
           <div>
-            <span className="font-medium text-gray-700">Invoice Number:</span>
-            <p className="text-gray-900 mt-1">{data.invoiceNumber}</p>
+            <span className="font-medium text-muted-foreground">Invoice Number:</span>
+            <p className="text-foreground mt-1">{data.invoiceNumber}</p>
           </div>
           <div>
-            <span className="font-medium text-gray-700">Client:</span>
-            <p className="text-gray-900 mt-1">{data.clientName}</p>
+            <span className="font-medium text-muted-foreground">Client:</span>
+            <p className="text-foreground mt-1">{data.clientName}</p>
           </div>
           <div>
-            <span className="font-medium text-gray-700">Date:</span>
-            <p className="text-gray-900 mt-1">
+            <span className="font-medium text-muted-foreground">Date:</span>
+            <p className="text-foreground mt-1">
               {new Date(data.invoiceDate).toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
@@ -118,8 +118,8 @@ export default function InvoicePreview({
             </p>
           </div>
           <div>
-            <span className="font-medium text-gray-700">Total:</span>
-            <p className="text-gray-900 mt-1 font-semibold">
+            <span className="font-medium text-muted-foreground">Total:</span>
+            <p className="text-foreground mt-1 font-semibold">
               {data.currency} {data.total.toFixed(2)}
             </p>
           </div>
@@ -127,7 +127,7 @@ export default function InvoicePreview({
       </div>
 
       {/* PDF Preview */}
-      <div className="border border-gray-300 rounded-lg overflow-hidden bg-gray-100 pdf-preview-mobile">
+      <div className="border border-border rounded-lg overflow-hidden bg-muted pdf-preview-mobile">
         {isClient ? (
           <div 
             className="w-full" 
@@ -149,23 +149,23 @@ export default function InvoicePreview({
         ) : (
           <div className="flex items-center justify-center h-64 sm:h-96">
             <div className="text-center">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-              <p className="text-sm sm:text-base text-gray-600">Loading preview...</p>
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+              <p className="text-sm sm:text-base text-muted-foreground">Loading preview...</p>
             </div>
           </div>
         )}
       </div>
 
       {/* Mobile-Friendly Note */}
-      <div className="mt-3 sm:mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-        <p className="text-xs sm:text-sm text-blue-800">
-          <strong>Tip:</strong> On mobile devices, you can pinch to zoom and scroll through the preview.
+      <div className="mt-3 sm:mt-4 p-3 bg-secondary/40 dark:bg-secondary border border-border rounded-md">
+        <p className="text-xs sm:text-sm text-muted-foreground">
+          <strong className="text-foreground">Tip:</strong> On mobile devices, you can pinch to zoom and scroll through the preview.
           Use the download button to save or share the PDF.
         </p>
       </div>
 
       {/* Action Buttons (Bottom) */}
-      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
+      <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-border">
         <Button
           type="button"
           variant="outline"
@@ -181,7 +181,7 @@ export default function InvoicePreview({
           <PDFDownloadLink
             document={<InvoiceDocument data={data} vendor={vendorProfile} />}
             fileName={getFileName()}
-            className="touch-target inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 h-11 px-8 py-2 w-full sm:w-auto"
+            className="touch-target inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80 h-11 px-8 py-2 w-full sm:w-auto"
           >
             {({ loading }) =>
               loading ? (

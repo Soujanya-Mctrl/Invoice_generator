@@ -312,7 +312,7 @@ export default function VendorProfile({
                 value={localProfile?.address || ''}
                 onChange={(e) => handleFieldChange('address', e.target.value)}
                 placeholder="Full business address"
-                className="mobile-input w-full px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[80px] resize-y touch-manipulation"
+                className="mobile-input w-full px-3 py-2 text-sm sm:text-base border border-input rounded-md bg-background text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] min-h-[80px] resize-y touch-manipulation"
                 required
               />
             </div>
@@ -401,7 +401,7 @@ export default function VendorProfile({
             </div>
 
         {!isSetupMode && (
-          <div className="pt-3 sm:pt-4 border-t border-gray-200">
+          <div className="pt-3 sm:pt-4 border-t border-border">
             <p className="text-xs sm:text-sm text-gray-500">
               <span className="text-red-500">*</span> Required fields
             </p>

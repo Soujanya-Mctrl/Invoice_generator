@@ -5,6 +5,7 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { InvoiceData, PaymentInfo } from '@/types';
+import { extractFromStructuredFormat } from './format-template';
 
 /**
  * ExtractionEngine class for parsing payment text into structured invoice data
@@ -18,14 +19,77 @@ export class ExtractionEngine {
   extractWithRegex(text: string): Partial<InvoiceData> {
     const extracted: Partial<InvoiceData> = {};
 
-    // Extract currency and amount
-    const { amount, currency } = this.extractAmount(text);
-    if (amount !== null) {
-      extracted.total = amount;
-      extracted.subtotal = amount;
+    // Try structured format extraction first
+    const structuredData = extractFromStructuredFormat(text);
+    
+    // If structured format found client name, use it
+    if (structuredData.clientName) {
+      extracted.clientName = structuredData.clientName;
     }
-    if (currency) {
-      extracted.currency = currency;
+    if (structuredData.clientCompany) {
+      extracted.clientCompany = structuredData.clientCompany;
+    }
+    if (structuredData.clientEmail) {
+      extracted.clientEmail = structuredData.clientEmail;
+    }
+    if (structuredData.clientPhone) {
+      extracted.clientPhone = structuredData.clientPhone;
+    }
+    
+    // Use structured items if available
+    if (structuredData.items && structuredData.items.length > 0) {
+      extracted.items = structuredData.items.map((item, index) => ({
+        id: `item-${index + 1}`,
+        description: item.description,
+        quantity: 1,
+        rate: item.amount,
+        amount: item.amount,
+      }));
+      
+      const total = structuredData.items.reduce((sum, item) => sum + item.amount, 0);
+      extracted.total = total;
+      extracted.subtotal = total;
+      
+      const currency = this.extractCurrencyFromAmount(text);
+      if (currency) {
+        extracted.currency = currency;
+      }
+    } else {
+      // Fallback to regex line item extraction
+      const lineItems = this.extractLineItems(text);
+      if (lineItems.length > 0) {
+        extracted.items = lineItems;
+        
+        // Calculate total from line items
+        const total = lineItems.reduce((sum, item) => sum + item.amount, 0);
+        extracted.total = total;
+        extracted.subtotal = total;
+        
+        // Get currency from first line item
+        const firstItemCurrency = this.extractCurrencyFromAmount(text);
+        if (firstItemCurrency) {
+          extracted.currency = firstItemCurrency;
+        }
+      } else {
+        // Fallback to single amount extraction if no line items found
+        const { amount, currency } = this.extractAmount(text);
+        if (amount !== null) {
+          extracted.total = amount;
+          extracted.subtotal = amount;
+        }
+        if (currency) {
+          extracted.currency = currency;
+        }
+      }
+    }
+    
+    // Use structured due date if available
+    if (structuredData.dueDate) {
+      // Try to parse the structured due date
+      const parsedDates = this.extractDates(structuredData.dueDate);
+      if (parsedDates.length > 0) {
+        extracted.dueDate = parsedDates[0];
+      }
     }
 
     // Extract dates
@@ -64,6 +128,64 @@ export class ExtractionEngine {
   }
 
   /**
+   * Extract line items from text
+   * Looks for patterns like "Logo redesign came to ₹3,200" or "website banner set is ₹4,500"
+   */
+  private extractLineItems(text: string): Array<{ id: string; description: string; quantity: number; rate: number; amount: number }> {
+    const lineItems: Array<{ id: string; description: string; quantity: number; rate: number; amount: number }> = [];
+    
+    // Pattern to match: [description] [amount with currency symbol]
+    // Examples: "Logo redesign came to ₹3,200", "website banner set is ₹4,500"
+    const patterns = [
+      // Pattern: "description came to/is/for [currency]amount"
+      /([A-Za-z][A-Za-z\s]+?)\s+(?:came to|is|for|costs?|totals?)\s+([₹Rs$€]|INR|USD|EUR)\s*(\d+(?:,\d+)*(?:\.\d{2})?)/gi,
+      // Pattern: "description - [currency]amount" or "description: [currency]amount"
+      /([A-Za-z][A-Za-z\s]+?)\s*[-:]\s*([₹Rs$€]|INR|USD|EUR)\s*(\d+(?:,\d+)*(?:\.\d{2})?)/gi,
+    ];
+
+    for (const pattern of patterns) {
+      let match;
+      while ((match = pattern.exec(text)) !== null) {
+        const description = match[1].trim();
+        const amountStr = match[3].replace(/,/g, '');
+        const amount = parseFloat(amountStr);
+        
+        // Skip if description is too short or looks like it's not a real item
+        // Also skip if amount looks like a phone number (> 100000)
+        if (description.length < 3 || description.toLowerCase().includes('total') || amount > 100000) {
+          continue;
+        }
+        
+        lineItems.push({
+          id: `item-${lineItems.length + 1}`,
+          description: description,
+          quantity: 1,
+          rate: amount,
+          amount: amount,
+        });
+      }
+    }
+
+    return lineItems;
+  }
+
+  /**
+   * Extract currency from text
+   */
+  private extractCurrencyFromAmount(text: string): string | null {
+    if (text.includes('₹') || text.includes('Rs') || text.includes('INR')) {
+      return 'INR';
+    }
+    if (text.includes('$') || text.includes('USD')) {
+      return 'USD';
+    }
+    if (text.includes('€') || text.includes('EUR')) {
+      return 'EUR';
+    }
+    return null;
+  }
+
+  /**
    * Extract amount and currency from text
    * Supports: ₹, Rs, INR, $, USD, €, EUR
    */
@@ -96,12 +218,47 @@ export class ExtractionEngine {
 
   /**
    * Extract dates from text and normalize to ISO 8601 format
-   * Supports: DD/MM/YYYY, DD-MM-YYYY, MM/DD/YYYY, YYYY-MM-DD
+   * Supports: DD/MM/YYYY, DD-MM-YYYY, MM/DD/YYYY, YYYY-MM-DD, "12th March 2025"
    */
   private extractDates(text: string): string[] {
     const dates: string[] = [];
     
-    // Pattern for various date formats
+    // Month name mapping
+    const monthNames: { [key: string]: number } = {
+      'january': 1, 'jan': 1,
+      'february': 2, 'feb': 2,
+      'march': 3, 'mar': 3,
+      'april': 4, 'apr': 4,
+      'may': 5,
+      'june': 6, 'jun': 6,
+      'july': 7, 'jul': 7,
+      'august': 8, 'aug': 8,
+      'september': 9, 'sep': 9, 'sept': 9,
+      'october': 10, 'oct': 10,
+      'november': 11, 'nov': 11,
+      'december': 12, 'dec': 12,
+    };
+    
+    // Pattern for text dates: "12th March 2025", "1st Jan 2024", etc.
+    const textDatePattern = /\b(\d{1,2})(?:st|nd|rd|th)?\s+(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)\s+(\d{4})\b/gi;
+    let match;
+    while ((match = textDatePattern.exec(text)) !== null) {
+      try {
+        const day = parseInt(match[1]);
+        const monthName = match[2].toLowerCase();
+        const year = parseInt(match[3]);
+        const month = monthNames[monthName];
+        
+        if (month && day >= 1 && day <= 31) {
+          const isoDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          dates.push(isoDate);
+        }
+      } catch (e) {
+        continue;
+      }
+    }
+    
+    // Pattern for various numeric date formats
     const datePatterns = [
       // DD/MM/YYYY or DD-MM-YYYY
       /\b(\d{1,2})[/-](\d{1,2})[/-](\d{4})\b/g,
@@ -221,14 +378,20 @@ export class ExtractionEngine {
 
   /**
    * Extract client name using simple heuristics
-   * Looks for patterns like "from [Name]", "to [Name]", "client: [Name]"
+   * Looks for patterns like "from [Name]", "to [Name]", "client: [Name]", "Hi [Name]", "Mr./Ms. [Name]"
    */
   private extractClientName(text: string): string | null {
     const patterns = [
+      // Greeting patterns: "Hi Mr. John Doe", "Hello Ms. Jane Smith", "Hi Ankit"
+      /(?:Hi|Hello|Dear)\s+(?:Mr\.?|Ms\.?|Mrs\.?|Dr\.?)?\s*([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*)/i,
+      // From/To patterns
       /(?:from|From|FROM)\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)(?:\s*\n|\s*$|,|\s+for\s+)/,
       /(?:to|To|TO)\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)(?:\s*\n|\s*$|,)/,
+      // Client/Name labels
       /(?:client|Client|CLIENT):\s*([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)(?:\s*\n|\s*$|,)/,
       /(?:name|Name|NAME):\s*([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)(?:\s*\n|\s*$|,)/,
+      // Bill to pattern
+      /(?:bill\s+to|Bill\s+to|BILL\s+TO):\s*([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)/i,
     ];
 
     for (const pattern of patterns) {
@@ -255,6 +418,7 @@ export class ExtractionEngine {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
+    // Use Gemini 1.5 Flash model
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     // Design structured prompt requesting JSON response
