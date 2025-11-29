@@ -189,8 +189,6 @@ export function validateVendorProfile(vendorProfile: Partial<VendorProfile>): Er
  * @returns ErrorResponse if validation fails, null if valid
  */
 export function validateFileUpload(file: File, maxSizeKB: number = 500): ErrorResponse | null {
-  const errors: Record<string, string> = {};
-
   // Validate file exists
   if (!file) {
     return {

@@ -120,3 +120,107 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Mobile Responsiveness and Touch Optimization */
+@layer utilities {
+  /* Larger tap targets for mobile (minimum 44x44px as per accessibility guidelines) */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* Optimize text input for mobile keyboards */
+  .mobile-input {
+    @apply text-base; /* Prevents zoom on iOS */
+  }
+
+  /* Scrollable container for mobile */
+  .mobile-scroll {
+    @apply overflow-auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* PDF preview container optimizations */
+  .pdf-preview-mobile {
+    @apply w-full overflow-auto;
+    touch-action: pan-x pan-y;
+  }
+
+  /* Responsive padding adjustments */
+  .responsive-padding {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Touch-friendly button spacing */
+  .touch-spacing {
+    @apply space-y-3 sm:space-y-0 sm:space-x-3;
+  }
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 640px) {
+  /* Ensure inputs don't zoom on iOS */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="date"],
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+
+  /* Optimize form field spacing on mobile */
+  .form-field-mobile {
+    margin-bottom: 1rem;
+  }
+
+  /* Adjust modal/dialog widths for mobile */
+  .dialog-mobile {
+    width: calc(100vw - 2rem);
+    max-width: 100%;
+  }
+
+  /* Stack buttons vertically on mobile */
+  .button-group-mobile {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .button-group-mobile > * {
+    width: 100%;
+  }
+}
+
+/* Tablet breakpoint adjustments */
+@media (min-width: 641px) and (max-width: 1024px) {
+  /* Optimize for tablet landscape/portrait */
+  .tablet-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Prevent text selection on buttons for better touch experience */
+button,
+.button {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+/* Smooth scrolling for better mobile experience */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Optimize PDF viewer for mobile */
+@media (max-width: 768px) {
+  .react-pdf__Page {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  .react-pdf__Page__canvas {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+}

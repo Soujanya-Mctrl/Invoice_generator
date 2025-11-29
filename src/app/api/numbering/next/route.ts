@@ -9,7 +9,7 @@ import { numberingService } from '@/lib/numbering/service';
 import type { NumberingResponse } from '@/types/api';
 import type { ErrorResponse } from '@/types/error';
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     // Generate the next invoice number
     const invoiceNumber = numberingService.generateNext();

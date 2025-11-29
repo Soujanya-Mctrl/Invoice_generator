@@ -23,8 +23,12 @@ export class PDFGenerator {
     vendor: VendorProfile
   ): Promise<Blob> {
     try {
+      // Validate data before generating PDF
+      this.validateInvoiceData(data);
+      this.validateVendorProfile(vendor);
+      
       // Create the PDF document using react-pdf
-      const document = InvoiceDocument({ data, vendor });
+      const document = <InvoiceDocument data={data} vendor={vendor} />;
       
       // Generate the PDF blob
       const blob = await pdf(document).toBlob();

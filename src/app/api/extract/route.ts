@@ -111,20 +111,17 @@ export async function POST(request: NextRequest) {
         },
       };
 
+      // If AI also failed, include that information
+      if (aiError && errorResponse.details) {
+        errorResponse.details.aiStatus = aiError.message;
+      }
+
       const response: ExtractResponse = {
         success: false,
         data: mergedResults,
         error: errorResponse,
         extractionMethod,
       };
-
-      // If AI also failed, include that information
-      if (aiError) {
-        response.error.details = {
-          ...response.error.details,
-          aiStatus: aiError.message,
-        };
-      }
 
       return NextResponse.json(response, { status: 200 });
     }
