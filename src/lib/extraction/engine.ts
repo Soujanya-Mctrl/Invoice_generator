@@ -1,8 +1,9 @@
 /**
  * Extraction Engine
- * Extracts invoice data from unstructured payment text using regex patterns
+ * Extracts invoice data from unstructured payment text using regex patterns and AI
  */
 
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { InvoiceData, PaymentInfo } from '@/types';
 
 /**
@@ -238,6 +239,155 @@ export class ExtractionEngine {
     }
 
     return null;
+  }
+
+  /**
+   * Extract invoice data using Gemini Flash AI model
+   * @param text - Unstructured payment text
+   * @returns Promise resolving to partial invoice data with AI-extracted fields
+   * @throws Error if AI extraction fails or times out
+   */
+  async extractWithAI(text: string): Promise<Partial<InvoiceData>> {
+    const apiKey = process.env.GEMINI_API_KEY;
+    
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY not configured');
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+    // Design structured prompt requesting JSON response
+    const prompt = `Extract invoice information from the following payment text and return it as a JSON object.
+
+Payment Text:
+${text}
+
+Please extract the following fields if present:
+- clientName: The name of the client/customer
+- clientCompany: The company name if mentioned
+- clientEmail: Email address
+- clientPhone: Phone number
+- clientAddress: Full address
+- amount: The payment amount (numeric value only, no currency symbols)
+- currency: Currency code (INR, USD, EUR, etc.)
+- invoiceDate: Date in YYYY-MM-DD format
+- dueDate: Due date in YYYY-MM-DD format if mentioned
+- upiId: UPI ID for payment
+- bankName: Bank name
+- accountNumber: Bank account number
+- ifscCode: IFSC code
+- accountHolderName: Account holder name
+- notes: Any additional notes or description of services
+
+Return ONLY a valid JSON object with the extracted fields. If a field is not found, omit it from the response. Do not include any markdown formatting or explanations.`;
+
+    try {
+      // Implement 8-second timeout for AI requests
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('AI extraction timeout')), 8000);
+      });
+
+      const generationPromise = model.generateContent(prompt);
+
+      const result = await Promise.race([generationPromise, timeoutPromise]);
+      const response = await result.response;
+      const responseText = response.text();
+
+      // Parse the JSON response
+      let extracted: any;
+      try {
+        // Remove markdown code blocks if present
+        const cleanedText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        extracted = JSON.parse(cleanedText);
+      } catch (parseError) {
+        throw new Error('Failed to parse AI response as JSON');
+      }
+
+      // Map AI response to InvoiceData structure
+      const invoiceData: Partial<InvoiceData> = {};
+
+      if (extracted.clientName) invoiceData.clientName = extracted.clientName;
+      if (extracted.clientCompany) invoiceData.clientCompany = extracted.clientCompany;
+      if (extracted.clientEmail) invoiceData.clientEmail = extracted.clientEmail;
+      if (extracted.clientPhone) invoiceData.clientPhone = extracted.clientPhone;
+      if (extracted.clientAddress) invoiceData.clientAddress = extracted.clientAddress;
+      if (extracted.currency) invoiceData.currency = extracted.currency;
+      if (extracted.invoiceDate) invoiceData.invoiceDate = extracted.invoiceDate;
+      if (extracted.dueDate) invoiceData.dueDate = extracted.dueDate;
+      if (extracted.notes) invoiceData.notes = extracted.notes;
+
+      // Handle amount
+      if (extracted.amount !== undefined && extracted.amount !== null) {
+        const amount = typeof extracted.amount === 'string' 
+          ? parseFloat(extracted.amount.replace(/,/g, ''))
+          : extracted.amount;
+        invoiceData.total = amount;
+        invoiceData.subtotal = amount;
+      }
+
+      // Handle payment info
+      const paymentInfo: Partial<PaymentInfo> = {};
+      if (extracted.upiId) paymentInfo.upiId = extracted.upiId;
+      if (extracted.bankName) paymentInfo.bankName = extracted.bankName;
+      if (extracted.accountNumber) paymentInfo.accountNumber = extracted.accountNumber;
+      if (extracted.ifscCode) paymentInfo.ifscCode = extracted.ifscCode;
+      if (extracted.accountHolderName) paymentInfo.accountHolderName = extracted.accountHolderName;
+
+      if (Object.keys(paymentInfo).length > 0) {
+        invoiceData.paymentInfo = paymentInfo;
+      }
+
+      return invoiceData;
+    } catch (error) {
+      // Re-throw with more context
+      if (error instanceof Error) {
+        throw new Error(`AI extraction failed: ${error.message}`);
+      }
+      throw new Error('AI extraction failed: Unknown error');
+    }
+  }
+
+  /**
+   * Merge regex and AI extraction results, preferring AI results when available
+   * @param regexResults - Results from regex-based extraction
+   * @param aiResults - Results from AI-based extraction
+   * @returns Merged invoice data with AI results taking precedence
+   */
+  mergeExtractionResults(
+    regexResults: Partial<InvoiceData>,
+    aiResults: Partial<InvoiceData>
+  ): Partial<InvoiceData> {
+    // AI results take precedence, but we keep regex results as fallback
+    const merged: Partial<InvoiceData> = {
+      ...regexResults,
+      ...aiResults,
+    };
+
+    // Merge payment info specially to combine fields from both sources
+    if (regexResults.paymentInfo || aiResults.paymentInfo) {
+      merged.paymentInfo = {
+        ...regexResults.paymentInfo,
+        ...aiResults.paymentInfo,
+      };
+    }
+
+    // Ensure currency has a default
+    if (!merged.currency) {
+      merged.currency = 'INR';
+    }
+
+    // Ensure date has a default (current date)
+    if (!merged.invoiceDate) {
+      merged.invoiceDate = new Date().toISOString().split('T')[0];
+    }
+
+    // Initialize empty items array if not present
+    if (!merged.items) {
+      merged.items = [];
+    }
+
+    return merged;
   }
 
   /**

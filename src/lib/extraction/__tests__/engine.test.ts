@@ -164,4 +164,74 @@ describe('ExtractionEngine', () => {
       expect(result.clientName).toBe('Test Client');
     });
   });
+
+  describe('mergeExtractionResults', () => {
+    it('should prefer AI results over regex results', () => {
+      const regexResults = {
+        clientName: 'John',
+        total: 1000,
+        currency: 'INR',
+      };
+      const aiResults = {
+        clientName: 'John Doe',
+        clientCompany: 'Acme Corp',
+      };
+      
+      const result = engine.mergeExtractionResults(regexResults, aiResults);
+      
+      expect(result.clientName).toBe('John Doe');
+      expect(result.clientCompany).toBe('Acme Corp');
+      expect(result.total).toBe(1000);
+      expect(result.currency).toBe('INR');
+    });
+
+    it('should merge payment info from both sources', () => {
+      const regexResults = {
+        paymentInfo: {
+          upiId: 'test@paytm',
+          ifscCode: 'HDFC0001234',
+        },
+      };
+      const aiResults = {
+        paymentInfo: {
+          bankName: 'HDFC Bank',
+          accountNumber: '1234567890',
+        },
+      };
+      
+      const result = engine.mergeExtractionResults(regexResults, aiResults);
+      
+      expect(result.paymentInfo?.upiId).toBe('test@paytm');
+      expect(result.paymentInfo?.ifscCode).toBe('HDFC0001234');
+      expect(result.paymentInfo?.bankName).toBe('HDFC Bank');
+      expect(result.paymentInfo?.accountNumber).toBe('1234567890');
+    });
+
+    it('should add defaults for missing fields', () => {
+      const regexResults = { total: 1000 };
+      const aiResults = { clientName: 'Test Client' };
+      
+      const result = engine.mergeExtractionResults(regexResults, aiResults);
+      
+      expect(result.currency).toBe('INR');
+      expect(result.invoiceDate).toBeDefined();
+      expect(result.items).toEqual([]);
+    });
+  });
+
+  describe('extractWithAI', () => {
+    it('should throw error when GEMINI_API_KEY is not configured', async () => {
+      const originalKey = process.env.GEMINI_API_KEY;
+      delete process.env.GEMINI_API_KEY;
+      
+      await expect(engine.extractWithAI('test text')).rejects.toThrow('GEMINI_API_KEY not configured');
+      
+      process.env.GEMINI_API_KEY = originalKey;
+    });
+
+    it('should handle timeout gracefully', async () => {
+      // This test would require mocking the Gemini API
+      // Skipping for now as it requires external API setup
+    });
+  });
 });

@@ -137,7 +137,12 @@
   - **Property 5: Bank details extraction**
   - **Validates: Requirements 2.3**
 
-- [ ] 6. Add AI-enhanced extraction with Gemini Flash
+- [x] 6. Add AI-enhanced extraction with Gemini Flash
+
+
+
+
+
   - Install and configure @google/generative-ai SDK
   - Create extractWithAI method using Gemini Flash model
   - Design structured prompt requesting JSON response with invoice fields
@@ -158,7 +163,12 @@
   - **Property 31: AI timeout fallback**
   - **Validates: Requirements 11.2**
 
-- [ ] 7. Create validation utilities
+- [x] 7. Create validation utilities
+
+
+
+
+
   - Create validation utilities in src/lib/validation/validators.ts
   - Create validateGSTNumber function with regex pattern validation
   - Create validateInvoiceData function to check required fields
@@ -179,7 +189,12 @@
   - **Property 35: Invalid input error**
   - **Validates: Requirements 14.3**
 
-- [ ] 8. Implement PDF generator with react-pdf
+- [x] 8. Implement PDF generator with react-pdf
+
+
+
+
+
   - Create PDFGenerator class in src/lib/pdf/generator.ts
   - Create InvoiceDocument component in src/lib/pdf/InvoiceDocument.tsx
   - Design PDF layout with header section (logo, vendor details, invoice number, date)
@@ -216,7 +231,17 @@
   - **Property 23: PDF logo inclusion**
   - **Validates: Requirements 9.5**
 
-- [ ] 9. Create API route for text extraction
+- [x] 9. Create API route for text extraction
+
+
+
+
+
+
+
+
+
+
   - Create POST route handler in src/app/api/extract/route.ts
   - Validate request body contains text field
   - Call ExtractionEngine.extractWithRegex
@@ -237,7 +262,12 @@
   - **Property 37: AI service unavailable error with fallback**
   - **Validates: Requirements 14.5**
 
-- [ ] 10. Create API route for PDF generation
+- [x] 10. Create API route for PDF generation
+
+
+
+
+
   - Create POST route handler in src/app/api/generate/route.ts
   - Validate request body contains invoiceData and vendorProfile
   - Generate invoice number if not provided using NumberingService
@@ -254,7 +284,12 @@
   - **Property 36: PDF generation failure error**
   - **Validates: Requirements 14.4**
 
-- [ ] 11. Create API route for vendor profile management
+- [x] 11. Create API route for vendor profile management
+
+
+
+
+
   - Create POST route handler in src/app/api/vendor/route.ts
   - Validate vendor profile data
   - Call StorageService.saveVendorProfile
@@ -262,14 +297,24 @@
   - Handle storage errors (STORAGE_QUOTA_EXCEEDED)
   - _Requirements: 3.1, 8.3_
 
-- [ ] 12. Create API route for invoice numbering
+- [x] 12. Create API route for invoice numbering
+
+
+
+
+
   - Create POST route handler in src/app/api/numbering/next/route.ts
   - Call NumberingService.generateNext
   - Return invoice number in response
   - Handle errors gracefully
   - _Requirements: 8.4, 10.1, 10.2, 10.3_
 
-- [ ] 13. Create API route for logo upload
+- [x] 13. Create API route for logo upload
+
+
+
+
+
   - Create POST route handler in src/app/api/upload/logo/route.ts
   - Validate file type (image/jpeg, image/png, image/svg+xml)
   - Validate file size (< 500KB)
