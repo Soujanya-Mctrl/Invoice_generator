@@ -12,7 +12,7 @@ import { ErrorResponse } from '@/types/error';
 import { storageService } from '@/lib/storage/service';
 import { numberingService } from '@/lib/numbering/service';
 
-type WorkflowStep = 'input' | 'edit' | 'preview';
+type WorkflowStep = 'profile-setup' | 'input' | 'edit' | 'preview';
 
 interface ToastMessage {
   type: ToastType;
@@ -39,8 +39,9 @@ interface ToastMessage {
  */
 export default function Home() {
   // Workflow state
-  const [step, setStep] = useState<WorkflowStep>('input');
+  const [step, setStep] = useState<WorkflowStep>('profile-setup');
   const [paymentText, setPaymentText] = useState('');
+  const [showProfileModal, setShowProfileModal] = useState(false);
   
   // Data state
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
@@ -60,6 +61,7 @@ export default function Home() {
     const savedProfile = storageService.getVendorProfile();
     if (savedProfile) {
       setVendorProfile(savedProfile);
+      setStep('input'); // Skip profile setup if profile exists
     }
   }, []);
 
@@ -289,6 +291,26 @@ export default function Home() {
     console.log('Logo uploaded:', file.name);
   };
 
+  // Handle profile setup completion
+  const handleProfileSetupComplete = () => {
+    if (!vendorProfile) {
+      showToast('error', 'Please complete your vendor profile');
+      return;
+    }
+    setStep('input');
+    showToast('success', 'Vendor profile saved successfully');
+  };
+
+  // Handle edit profile
+  const handleEditProfile = () => {
+    setShowProfileModal(true);
+  };
+
+  // Handle close profile modal
+  const handleCloseProfileModal = () => {
+    setShowProfileModal(false);
+  };
+
   // Handle starting over
   const handleStartOver = () => {
     setPaymentText('');
@@ -300,115 +322,154 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto responsive-padding py-3 sm:py-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="w-full sm:w-auto">
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
-                Invoice Generator
-              </h1>
-              <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                Convert payment text to professional PDF invoices
-              </p>
-            </div>
-            
-            {/* Step indicator - horizontal on desktop, compact on mobile */}
-            <div className="flex sm:hidden items-center gap-2 text-xs w-full justify-center">
-              <div className={`px-2 py-1 rounded-full flex-1 text-center ${
-                step === 'input' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-200 text-gray-600'
-              }`}>
-                Input
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
               </div>
-              <div className="w-4 h-px bg-gray-300" />
-              <div className={`px-2 py-1 rounded-full flex-1 text-center ${
-                step === 'edit' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-200 text-gray-600'
-              }`}>
-                Edit
-              </div>
-              <div className="w-4 h-px bg-gray-300" />
-              <div className={`px-2 py-1 rounded-full flex-1 text-center ${
-                step === 'preview' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-200 text-gray-600'
-              }`}>
-                Preview
+              <div>
+                <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
+                  Invoice Generator
+                </h1>
+                <p className="text-xs sm:text-sm text-gray-600">
+                  Professional invoices in seconds
+                </p>
               </div>
             </div>
             
-            {/* Desktop step indicator */}
-            <div className="hidden sm:flex items-center gap-2 text-sm">
-              <div className={`px-3 py-1 rounded-full ${
-                step === 'input' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-200 text-gray-600'
-              }`}>
-                1. Input
-              </div>
-              <div className="w-8 h-px bg-gray-300" />
-              <div className={`px-3 py-1 rounded-full ${
-                step === 'edit' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-200 text-gray-600'
-              }`}>
-                2. Edit
-              </div>
-              <div className="w-8 h-px bg-gray-300" />
-              <div className={`px-3 py-1 rounded-full ${
-                step === 'preview' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-200 text-gray-600'
-              }`}>
-                3. Preview
-              </div>
-            </div>
+            {/* Profile Icon - Only show after profile setup */}
+            {step !== 'profile-setup' && vendorProfile && (
+              <button
+                onClick={handleEditProfile}
+                className="touch-target flex items-center gap-2 px-3 sm:px-4 py-2 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-lg transition-colors"
+                title="Edit Vendor Profile"
+              >
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
+                  {vendorProfile.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="hidden sm:block text-left">
+                  <p className="text-sm font-medium text-gray-900">{vendorProfile.name}</p>
+                  <p className="text-xs text-gray-600">{vendorProfile.companyName || 'Edit Profile'}</p>
+                </div>
+                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+              </button>
+            )}
           </div>
+          
+          {/* Step indicator - Only show after profile setup */}
+          {step !== 'profile-setup' && (
+            <div className="mt-4 flex items-center justify-center gap-2 text-xs sm:text-sm">
+              <div className={`px-3 py-1.5 rounded-full transition-all ${
+                step === 'input' 
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md' 
+                  : 'bg-gray-200 text-gray-600'
+              }`}>
+                <span className="hidden sm:inline">1. </span>Input
+              </div>
+              <div className="w-6 sm:w-8 h-px bg-gray-300" />
+              <div className={`px-3 py-1.5 rounded-full transition-all ${
+                step === 'edit' 
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md' 
+                  : 'bg-gray-200 text-gray-600'
+              }`}>
+                <span className="hidden sm:inline">2. </span>Edit
+              </div>
+              <div className="w-6 sm:w-8 h-px bg-gray-300" />
+              <div className={`px-3 py-1.5 rounded-full transition-all ${
+                step === 'preview' 
+                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md' 
+                  : 'bg-gray-200 text-gray-600'
+              }`}>
+                <span className="hidden sm:inline">3. </span>Preview
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto responsive-padding py-4 sm:py-6 lg:py-8">
-        {/* Vendor Profile - Accessible from all steps */}
-        <div className="mb-4 sm:mb-6 lg:mb-8">
-          <VendorProfile
-            profile={vendorProfile}
-            onChange={handleVendorProfileChange}
-            onLogoUpload={handleLogoUpload}
-          />
-        </div>
-
-        {/* AI Service Status Banner */}
-        {aiServiceStatus === 'unavailable' && (
-          <div className="mb-6">
-            <ErrorDisplay
-              error={{
-                errorCode: 'AI_SERVICE_UNAVAILABLE',
-                message: 'AI extraction service is currently unavailable',
-              }}
-              inline
-            />
-          </div>
-        )}
-
-        {/* Global Error Display */}
-        {error && step === 'input' && (
-          <div className="mb-6">
-            <ErrorDisplay
-              error={error}
-              onDismiss={() => setError(null)}
-            />
-          </div>
-        )}
-
         {/* Step Content */}
-        <div className="space-y-8">
+        <div className="space-y-6">
+          {/* Profile Setup Step */}
+          {step === 'profile-setup' && (
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full mb-4">
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                  Welcome! Let's Set Up Your Profile
+                </h2>
+                <p className="text-gray-600">
+                  This information will appear on all your invoices
+                </p>
+              </div>
+              
+              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 sm:p-8">
+                <VendorProfile
+                  profile={vendorProfile}
+                  onChange={handleVendorProfileChange}
+                  onLogoUpload={handleLogoUpload}
+                  isSetupMode={true}
+                />
+                
+                <div className="mt-8 flex justify-center">
+                  <button
+                    onClick={handleProfileSetupComplete}
+                    disabled={!vendorProfile}
+                    className="touch-target px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 active:from-blue-800 active:to-purple-800 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg"
+                  >
+                    Continue to Invoice Generator
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* AI Service Status Banner */}
+          {step !== 'profile-setup' && aiServiceStatus === 'unavailable' && (
+            <div className="mb-6">
+              <ErrorDisplay
+                error={{
+                  errorCode: 'AI_SERVICE_UNAVAILABLE',
+                  message: 'AI extraction service is currently unavailable',
+                }}
+                inline
+              />
+            </div>
+          )}
+
+          {/* Global Error Display */}
+          {error && step === 'input' && (
+            <div className="mb-6">
+              <ErrorDisplay
+                error={error}
+                onDismiss={() => setError(null)}
+              />
+            </div>
+          )}
+
           {step === 'input' && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 sm:p-8">
+              <div className="mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+                  Paste Payment Details
+                </h2>
+                <p className="text-gray-600 text-sm sm:text-base">
+                  Copy and paste payment information from emails, messages, or notes
+                </p>
+              </div>
               <TextInput
                 value={paymentText}
                 onChange={setPaymentText}
@@ -493,6 +554,52 @@ export default function Home() {
           )}
         </div>
       </main>
+
+      {/* Profile Edit Modal */}
+      {showProfileModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+                Edit Vendor Profile
+              </h2>
+              <button
+                onClick={handleCloseProfileModal}
+                className="touch-target p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6">
+              <VendorProfile
+                profile={vendorProfile}
+                onChange={handleVendorProfileChange}
+                onLogoUpload={handleLogoUpload}
+                isSetupMode={false}
+              />
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  onClick={handleCloseProfileModal}
+                  className="touch-target px-6 py-2.5 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 active:bg-gray-400 transition-colors"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => {
+                    handleCloseProfileModal();
+                    showToast('success', 'Profile updated successfully');
+                  }}
+                  className="touch-target px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-purple-700 active:from-blue-800 active:to-purple-800 transition-all shadow-md"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast Notification */}
       {toast && (

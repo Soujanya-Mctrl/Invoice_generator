@@ -6,20 +6,15 @@ import { ErrorResponse } from '@/types/error';
 import { storageService } from '@/lib/storage/service';
 import { validateGSTNumber } from '@/lib/validation/validators';
 import ErrorDisplay from '@/components/ErrorDisplay';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronUp, Upload, X } from 'lucide-react';
+import { Upload, X } from 'lucide-react';
 
 interface VendorProfileProps {
   profile: VendorProfileType | null;
   onChange: (profile: VendorProfileType) => void;
   onLogoUpload: (file: File) => void;
+  isSetupMode?: boolean;
 }
 
 /**
@@ -42,8 +37,8 @@ export default function VendorProfile({
   profile,
   onChange,
   onLogoUpload,
+  isSetupMode = false,
 }: VendorProfileProps) {
-  const [isOpen, setIsOpen] = useState(false);
   const [localProfile, setLocalProfile] = useState<VendorProfileType | null>(profile);
   const [gstError, setGstError] = useState<string>('');
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -202,24 +197,8 @@ export default function VendorProfile({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <CollapsibleTrigger asChild>
-          <Button
-            variant="outline"
-            className="touch-target w-full flex items-center justify-between p-3 sm:p-4 hover:bg-gray-50 active:bg-gray-100"
-          >
-            <span className="text-base sm:text-lg font-medium">Vendor Profile</span>
-            {isOpen ? (
-              <ChevronUp className="h-5 w-5" />
-            ) : (
-              <ChevronDown className="h-5 w-5" />
-            )}
-          </Button>
-        </CollapsibleTrigger>
-
-        <CollapsibleContent className="mt-3 sm:mt-4 p-4 sm:p-6 border border-gray-200 rounded-lg bg-white">
-          <div className="space-y-4 sm:space-y-6">
+    <div className="w-full">
+      <div className="space-y-4 sm:space-y-6">
             {/* Error Display */}
             {error && (
               <ErrorDisplay
@@ -421,17 +400,17 @@ export default function VendorProfile({
               </div>
             </div>
 
-            <div className="pt-3 sm:pt-4 border-t border-gray-200">
-              <p className="text-xs sm:text-sm text-gray-500">
-                <span className="text-red-500">*</span> Required fields
-              </p>
-              <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                All changes are automatically saved to your browser's local storage.
-              </p>
-            </div>
+        {!isSetupMode && (
+          <div className="pt-3 sm:pt-4 border-t border-gray-200">
+            <p className="text-xs sm:text-sm text-gray-500">
+              <span className="text-red-500">*</span> Required fields
+            </p>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1">
+              All changes are automatically saved to your browser's local storage.
+            </p>
           </div>
-        </CollapsibleContent>
-      </Collapsible>
+        )}
+      </div>
     </div>
   );
 }

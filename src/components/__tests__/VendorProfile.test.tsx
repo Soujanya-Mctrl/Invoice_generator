@@ -27,7 +27,7 @@ describe('VendorProfile Component', () => {
     (storageService.getLogo as jest.Mock).mockReturnValue(null);
   });
 
-  it('should render collapsible trigger button', () => {
+  it('should render vendor profile form', () => {
     render(
       <VendorProfile
         profile={null}
@@ -36,11 +36,12 @@ describe('VendorProfile Component', () => {
       />
     );
 
-    const triggerButton = screen.getByRole('button', { name: /vendor profile/i });
-    expect(triggerButton).toBeInTheDocument();
+    // Check if form fields are visible
+    expect(screen.getByLabelText(/^name/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^email/i)).toBeInTheDocument();
   });
 
-  it('should expand when trigger is clicked', () => {
+  it('should display form fields', () => {
     render(
       <VendorProfile
         profile={null}
@@ -48,9 +49,6 @@ describe('VendorProfile Component', () => {
         onLogoUpload={mockOnLogoUpload}
       />
     );
-
-    const triggerButton = screen.getByRole('button', { name: /vendor profile/i });
-    fireEvent.click(triggerButton);
 
     // Check if form fields are visible
     expect(screen.getByLabelText(/^name/i)).toBeInTheDocument();
@@ -88,11 +86,7 @@ describe('VendorProfile Component', () => {
       />
     );
 
-    // Expand the collapsible
-    const triggerButton = screen.getByRole('button', { name: /vendor profile/i });
-    fireEvent.click(triggerButton);
-
-    // Change the name field
+// Change the name field
     const nameInput = screen.getByLabelText(/^name/i);
     fireEvent.change(nameInput, { target: { value: 'Jane Doe' } });
 
@@ -111,11 +105,7 @@ describe('VendorProfile Component', () => {
       />
     );
 
-    // Expand the collapsible
-    const triggerButton = screen.getByRole('button', { name: /vendor profile/i });
-    fireEvent.click(triggerButton);
-
-    // Enter invalid GST number
+// Enter invalid GST number
     const gstInput = screen.getByLabelText(/gst number/i);
     fireEvent.change(gstInput, { target: { value: 'INVALID' } });
 
@@ -133,11 +123,7 @@ describe('VendorProfile Component', () => {
       />
     );
 
-    // Expand the collapsible
-    const triggerButton = screen.getByRole('button', { name: /vendor profile/i });
-    fireEvent.click(triggerButton);
-
-    // Enter lowercase GST number
+// Enter lowercase GST number
     const gstInput = screen.getByLabelText(/gst number/i) as HTMLInputElement;
     fireEvent.change(gstInput, { target: { value: 'abc' } });
 
@@ -153,11 +139,7 @@ describe('VendorProfile Component', () => {
       />
     );
 
-    // Expand the collapsible
-    const triggerButton = screen.getByRole('button', { name: /vendor profile/i });
-    fireEvent.click(triggerButton);
-
-    // Check for required field indicators (asterisks)
+// Check for required field indicators (asterisks)
     const requiredFields = screen.getAllByText('*');
     expect(requiredFields.length).toBeGreaterThan(0);
   });
@@ -171,11 +153,7 @@ describe('VendorProfile Component', () => {
       />
     );
 
-    // Expand the collapsible
-    const triggerButton = screen.getByRole('button', { name: /vendor profile/i });
-    fireEvent.click(triggerButton);
-
-    expect(screen.getByText(/payment details/i)).toBeInTheDocument();
+expect(screen.getByText(/payment details/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/upi id/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/bank name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/account number/i)).toBeInTheDocument();
@@ -191,11 +169,7 @@ describe('VendorProfile Component', () => {
       />
     );
 
-    // Expand the collapsible
-    const triggerButton = screen.getByRole('button', { name: /vendor profile/i });
-    fireEvent.click(triggerButton);
-
-    // Enter lowercase IFSC code
+// Enter lowercase IFSC code
     const ifscInput = screen.getByLabelText(/ifsc code/i) as HTMLInputElement;
     fireEvent.change(ifscInput, { target: { value: 'abcd0123456' } });
 
@@ -211,10 +185,6 @@ describe('VendorProfile Component', () => {
       />
     );
 
-    // Expand the collapsible
-    const triggerButton = screen.getByRole('button', { name: /vendor profile/i });
-    fireEvent.click(triggerButton);
-
-    expect(screen.getByText(/all changes are automatically saved/i)).toBeInTheDocument();
+expect(screen.getByText(/all changes are automatically saved/i)).toBeInTheDocument();
   });
 });
