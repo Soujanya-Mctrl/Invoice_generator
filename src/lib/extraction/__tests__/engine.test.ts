@@ -1,0 +1,167 @@
+/**
+ * Tests for ExtractionEngine
+ */
+
+import { ExtractionEngine } from '../engine';
+
+describe('ExtractionEngine', () => {
+  let engine: ExtractionEngine;
+
+  beforeEach(() => {
+    engine = new ExtractionEngine();
+  });
+
+  describe('extractWithRegex', () => {
+    it('should extract INR amount with rupee symbol', () => {
+      const text = 'Please pay ₹5,000.00 for services';
+      const result = engine.extractWithRegex(text);
+      
+      expect(result.total).toBe(5000.00);
+      expect(result.currency).toBe('INR');
+    });
+
+    it('should extract USD amount with dollar sign', () => {
+      const text = 'Total: $1,234.56';
+      const result = engine.extractWithRegex(text);
+      
+      expect(result.total).toBe(1234.56);
+      expect(result.currency).toBe('USD');
+    });
+
+    it('should extract EUR amount with euro symbol', () => {
+      const text = 'Amount due: €999.99';
+      const result = engine.extractWithRegex(text);
+      
+      expect(result.total).toBe(999.99);
+      expect(result.currency).toBe('EUR');
+    });
+
+    it('should extract dates in DD/MM/YYYY format', () => {
+      const text = 'Invoice date: 15/03/2024';
+      const result = engine.extractWithRegex(text);
+      
+      expect(result.invoiceDate).toBe('2024-03-15');
+    });
+
+    it('should extract dates in YYYY-MM-DD format', () => {
+      const text = 'Due date: 2024-12-31';
+      const result = engine.extractWithRegex(text);
+      
+      expect(result.invoiceDate).toBe('2024-12-31');
+    });
+
+    it('should extract UPI ID', () => {
+      const text = 'Pay to: merchant@paytm';
+      const result = engine.extractWithRegex(text);
+      
+      expect(result.paymentInfo?.upiId).toBe('merchant@paytm');
+    });
+
+    it('should extract bank account number', () => {
+      const text = 'Account: 1234567890123';
+      const result = engine.extractWithRegex(text);
+      
+      expect(result.paymentInfo?.accountNumber).toBe('1234567890123');
+    });
+
+    it('should extract IFSC code', () => {
+      const text = 'IFSC: HDFC0001234';
+      const result = engine.extractWithRegex(text);
+      
+      expect(result.paymentInfo?.ifscCode).toBe('HDFC0001234');
+    });
+
+    it('should extract email address', () => {
+      const text = 'Contact: client@example.com';
+      const result = engine.extractWithRegex(text);
+      
+      expect(result.clientEmail).toBe('client@example.com');
+    });
+
+    it('should extract phone number', () => {
+      const text = 'Phone: +919876543210';
+      const result = engine.extractWithRegex(text);
+      
+      expect(result.clientPhone).toBe('9876543210');
+    });
+
+    it('should extract client name from "from" pattern', () => {
+      const text = 'Payment from John Doe for services';
+      const result = engine.extractWithRegex(text);
+      
+      expect(result.clientName).toBe('John Doe');
+    });
+
+    it('should extract multiple fields from complex text', () => {
+      const text = `
+        Payment from Alice Smith
+        Amount: ₹15,000.00
+        Date: 25/11/2024
+        UPI: alice@oksbi
+        Phone: 9876543210
+      `;
+      const result = engine.extractWithRegex(text);
+      
+      expect(result.clientName).toBe('Alice Smith');
+      expect(result.total).toBe(15000.00);
+      expect(result.currency).toBe('INR');
+      expect(result.invoiceDate).toBe('2024-11-25');
+      expect(result.paymentInfo?.upiId).toBe('alice@oksbi');
+      expect(result.clientPhone).toBe('9876543210');
+    });
+  });
+
+  describe('extractGSTNumber', () => {
+    it('should extract valid GST number', () => {
+      const text = 'GST: 29ABCDE1234F1Z5';
+      const result = engine.extractGSTNumber(text);
+      
+      expect(result).toBe('29ABCDE1234F1Z5');
+    });
+
+    it('should return null for invalid GST format', () => {
+      const text = 'GST: INVALID123';
+      const result = engine.extractGSTNumber(text);
+      
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('mergeResults', () => {
+    it('should add default currency if missing', () => {
+      const extracted = { total: 1000 };
+      const result = engine.mergeResults(extracted);
+      
+      expect(result.currency).toBe('INR');
+    });
+
+    it('should add default invoice date if missing', () => {
+      const extracted = { total: 1000 };
+      const result = engine.mergeResults(extracted);
+      
+      expect(result.invoiceDate).toBeDefined();
+      expect(result.invoiceDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    });
+
+    it('should initialize empty items array', () => {
+      const extracted = { total: 1000 };
+      const result = engine.mergeResults(extracted);
+      
+      expect(result.items).toEqual([]);
+    });
+
+    it('should preserve existing values', () => {
+      const extracted = {
+        total: 1000,
+        currency: 'USD',
+        invoiceDate: '2024-01-01',
+        clientName: 'Test Client',
+      };
+      const result = engine.mergeResults(extracted);
+      
+      expect(result.currency).toBe('USD');
+      expect(result.invoiceDate).toBe('2024-01-01');
+      expect(result.clientName).toBe('Test Client');
+    });
+  });
+});
