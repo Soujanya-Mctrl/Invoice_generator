@@ -6,7 +6,6 @@ A local web application that converts unstructured payment-related text (from em
 
 - **Smart Text Extraction**: Paste payment text and automatically extract invoice details
 - **AI-Enhanced Parsing**: Optional Gemini AI integration for improved accuracy
-- **Offline-First**: Works entirely in your browser with local storage
 - **Professional PDFs**: Generate clean, formatted invoice PDFs
 - **Vendor Profiles**: Save and reuse your business information
 - **Auto-Numbering**: Automatic invoice number generation (INV-YYYY-###)
