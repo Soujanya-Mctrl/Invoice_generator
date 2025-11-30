@@ -12,6 +12,7 @@ import { InvoiceData, VendorProfile as VendorProfileType, ExtractResponse } from
 import { ErrorResponse } from '@/types/error';
 import { storageService } from '@/lib/storage/service';
 import { numberingService } from '@/lib/numbering/service';
+import ThemeToggle from '@/components/ThemeToggle';
 
 type WorkflowStep = 'profile-setup' | 'input' | 'edit' | 'preview';
 
@@ -121,9 +122,11 @@ export default function Home() {
 
       // Generate invoice number
       const invoiceNumber = numberingService.generateNext();
+      // Always use today's date for invoice date (device date)
       const today = new Date().toISOString().split('T')[0];
 
       // Create complete invoice data with extracted fields
+      // Invoice date is always today's date (device date)
       const newInvoiceData: InvoiceData = {
         invoiceNumber,
         invoiceDate: today,
@@ -133,8 +136,16 @@ export default function Home() {
         clientEmail: result.data.clientEmail || '',
         clientPhone: result.data.clientPhone || '',
         clientAddress: result.data.clientAddress || '',
-        items: result.data.items && result.data.items.length > 0 
-          ? result.data.items 
+        // Ensure items array is properly set - use extracted items if available
+        // CRITICAL: Preserve ALL items - no limit, no filtering
+        items: result.data.items && Array.isArray(result.data.items) && result.data.items.length > 0 
+          ? result.data.items.map((item, index) => ({
+              id: item.id || `item-${Date.now()}-${index}`,
+              description: item.description || '',
+              quantity: item.quantity || 1,
+              rate: item.rate || 0,
+              amount: item.amount || 0,
+            }))
           : [{
               id: `item-${Date.now()}`,
               description: '',
@@ -144,13 +155,23 @@ export default function Home() {
             }],
         currency: result.data.currency || 'INR',
         subtotal: result.data.subtotal || 0,
-        taxRate: result.data.taxRate || 0,
-        taxAmount: result.data.taxAmount || 0,
+        taxRate: result.data.taxRate !== undefined && result.data.taxRate !== null ? result.data.taxRate : 0,
+        taxAmount: result.data.taxAmount !== undefined && result.data.taxAmount !== null ? result.data.taxAmount : 0,
         total: result.data.total || 0,
         paymentInfo: result.data.paymentInfo || undefined,
         notes: result.data.notes || '',
       };
 
+      // Log extracted items for debugging
+      console.log(`Page: Received ${newInvoiceData.items.length} items from extraction:`, 
+        newInvoiceData.items.map(i => `${i.description} - ₹${i.amount}`));
+      console.log('Page: Tax information:', {
+        taxRate: newInvoiceData.taxRate,
+        taxAmount: newInvoiceData.taxAmount,
+        subtotal: newInvoiceData.subtotal,
+        total: newInvoiceData.total,
+      });
+      
       setInvoiceData(newInvoiceData);
       
       // Clear any previous errors before proceeding
@@ -330,6 +351,7 @@ export default function Home() {
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary rounded-lg flex items-center justify-center">
+                <ThemeToggle />
                 <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
@@ -364,6 +386,7 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                 </svg>
               </Button>
+              
             )}
           </div>
           
@@ -468,10 +491,10 @@ export default function Home() {
             <div className="bg-card rounded-xl shadow-lg border border-border p-6 sm:p-8">
               <div className="mb-6">
                 <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-2">
-                  Paste Payment Details
+                  Payment Details
                 </h2>
                 <p className="text-muted-foreground text-sm sm:text-base">
-                  Copy and paste payment information from emails, messages, or notes
+                  Put payment information from emails, messages, or notes
                 </p>
               </div>
               <TextInput

@@ -185,18 +185,25 @@ const styles = StyleSheet.create({
 });
 
 /**
- * Format currency amount with symbol
+ * Format currency amount using the user-specified code/symbol.
+ *
+ * We don't try to be clever here – whatever the user typed into the
+ * `currency` field (e.g. "INR", "USD", "€", "₹") is what we render,
+ * so the PDF is always consistent with the UI.
  */
 const formatCurrency = (amount: number, currency: string): string => {
-  const currencySymbols: Record<string, string> = {
-    INR: '₹',
-    USD: '$',
-    EUR: '€',
-    GBP: '£',
-  };
-  
-  const symbol = currencySymbols[currency] || currency;
-  return `${symbol}${amount.toFixed(2)}`;
+  const code = (currency || '').trim();
+
+  if (!code) {
+    return amount.toFixed(2);
+  }
+
+  // If it's an alphabetic ISO code (e.g. "INR", "USD") use a space
+  // between the code and the number. For symbols (₹, €, $) no space.
+  const needsSpace = /^[A-Za-z]{2,4}$/.test(code);
+  const separator = needsSpace ? ' ' : '';
+
+  return `${code}${separator}${amount.toFixed(2)}`;
 };
 
 /**

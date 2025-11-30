@@ -56,6 +56,17 @@ export async function POST(request: NextRequest) {
 
     // Extract with regex (always runs)
     const regexResults = engine.extractWithRegex(body.text);
+    
+    // Debug logging for regex extraction
+    console.log('Regex Extraction Results:', {
+      itemsCount: regexResults.items?.length || 0,
+      hasDueDate: !!regexResults.dueDate,
+      hasClientName: !!regexResults.clientName,
+      hasTotal: !!regexResults.total,
+      taxRate: regexResults.taxRate,
+      taxAmount: regexResults.taxAmount,
+      subtotal: regexResults.subtotal,
+    });
 
     let finalResults = regexResults;
     let extractionMethod: 'regex' | 'ai' | 'hybrid' = 'regex';
@@ -69,6 +80,10 @@ export async function POST(request: NextRequest) {
     if (!regexResults.total && !regexResults.subtotal) {
       regexMissingFields.push('amount');
     }
+    // Check if items are missing or empty
+    if (!regexResults.items || !Array.isArray(regexResults.items) || regexResults.items.length === 0) {
+      regexMissingFields.push('items');
+    }
 
     // Automatically use AI extraction if:
     // 1. useAI flag is explicitly true, OR
@@ -78,6 +93,17 @@ export async function POST(request: NextRequest) {
     if (shouldUseAI) {
       try {
         const aiResults = await engine.extractWithAI(body.text);
+        
+        // Debug logging for extracted data
+        console.log('AI Extraction Results:', {
+          itemsCount: aiResults.items?.length || 0,
+          hasDueDate: !!aiResults.dueDate,
+          hasClientName: !!aiResults.clientName,
+          hasTotal: !!aiResults.total,
+          taxRate: aiResults.taxRate,
+          taxAmount: aiResults.taxAmount,
+          subtotal: aiResults.subtotal,
+        });
         
         // Merge results with AI taking precedence
         finalResults = engine.mergeExtractionResults(regexResults, aiResults);
@@ -102,6 +128,19 @@ export async function POST(request: NextRequest) {
     // Merge results to ensure defaults are set
     const mergedResults = engine.mergeResults(finalResults);
 
+    // Debug logging for final merged results
+    console.log('Final Merged Results:', {
+      itemsCount: mergedResults.items?.length || 0,
+      hasDueDate: !!mergedResults.dueDate,
+      dueDate: mergedResults.dueDate,
+      hasClientName: !!mergedResults.clientName,
+      hasTotal: !!mergedResults.total,
+      total: mergedResults.total,
+      taxRate: mergedResults.taxRate,
+      taxAmount: mergedResults.taxAmount,
+      subtotal: mergedResults.subtotal,
+    });
+
     // Check if extraction is still incomplete after AI attempt
     const missingFields: string[] = [];
     
@@ -111,6 +150,11 @@ export async function POST(request: NextRequest) {
     
     if (!mergedResults.total && !mergedResults.subtotal) {
       missingFields.push('amount');
+    }
+    
+    // Check if items are missing or empty
+    if (!mergedResults.items || !Array.isArray(mergedResults.items) || mergedResults.items.length === 0) {
+      missingFields.push('items');
     }
 
     // If extraction is incomplete, return error but still include partial data

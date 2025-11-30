@@ -189,6 +189,13 @@ export default function InvoiceForm({
     }
   };
 
+  // Extract GST number from notes
+  const extractGSTFromNotes = (notes: string | undefined): string => {
+    if (!notes) return '';
+    const gstMatch = notes.match(/GST:\s*([A-Z0-9]{15})/i);
+    return gstMatch ? gstMatch[1].toUpperCase() : '';
+  };
+
   // Check if form is valid for enabling preview button
   const isFormValid = () => {
     return (
@@ -307,6 +314,28 @@ export default function InvoiceForm({
               onChange={(e) => handleFieldChange('clientPhone', e.target.value)}
               placeholder="+91 1234567890"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="client-gst">GST Number</Label>
+            <Input
+              id="client-gst"
+              type="text"
+              value={extractGSTFromNotes(localData.notes)}
+              onChange={(e) => {
+                const gstValue = e.target.value.toUpperCase();
+                // Update notes to include GST
+                const currentNotes = localData.notes || '';
+                const notesWithoutGST = currentNotes.replace(/\n?GST:\s*[A-Z0-9]+\s*/gi, '').trim();
+                const newNotes = gstValue 
+                  ? (notesWithoutGST ? `${notesWithoutGST}\nGST: ${gstValue}` : `GST: ${gstValue}`)
+                  : notesWithoutGST;
+                handleFieldChange('notes', newNotes);
+              }}
+              placeholder="22AAAAA0000A1Z5"
+              maxLength={15}
+            />
+            <p className="text-sm text-gray-500">Client GST/GSTIN number (optional)</p>
           </div>
         </div>
 
@@ -431,7 +460,7 @@ export default function InvoiceForm({
 
           <div className="flex items-center justify-between gap-4">
             <Label htmlFor="tax-rate" className="text-sm font-medium">
-              Tax Rate (%):
+              Tax Rate (GST %):
             </Label>
             <div className="flex items-center gap-2">
               <Input
@@ -447,6 +476,7 @@ export default function InvoiceForm({
                 placeholder="0"
                 className="w-24"
               />
+              <span className="text-xs text-gray-500">%</span>
             </div>
           </div>
 

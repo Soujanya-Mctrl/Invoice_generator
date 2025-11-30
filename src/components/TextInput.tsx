@@ -52,7 +52,7 @@ export default function TextInput({
             htmlFor="payment-text"
             className="block text-sm sm:text-base font-medium text-foreground"
           >
-            Paste Payment Text
+            Payment Text
           </label>
           <button
             type="button"
